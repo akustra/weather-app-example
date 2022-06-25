@@ -13,54 +13,79 @@ class GetWeatherData extends Command
     protected $signature = 'gwd';
     protected $description = 'Get weather data from the API';
 
-    private string $url = "https://api.openweathermap.org/data/2.5/onecall?lon=17.0385376&exclude=minutely&appid=API_KEY&lat=51.1078852&units=metric&lang=pl";
+    private $cities = [
+        'wroclaw' => [
+            'name' => 'Wrocław',
+            'lon' => 17.0385376,
+            'lat' => 51.1078852,
+        ],
+        'zielona-gora' => [
+            'name' => 'Zielona Góra',
+            'lon' => 15.50643,
+            'lat' => 51.935478
+
+        ]
+    ];
+
+    private string $url = "https://api.openweathermap.org/data/2.5/onecall?lon=LON_VAL&exclude=minutely&appid=API_KEY&lat=LAT_VAL&units=metric&lang=pl";
 
     public function handle()
     {
         $this->info("Getting data from the API...");
 
-        $url = \str_replace('API_KEY', env('API_KEY'), $this->url);
+        foreach ($this->cities as $slug => $city) {
 
-        $response = Http::get($url);
-        $json = $response->body();
+            $url = \str_replace(
+                ['API_KEY', 'LON_VAL', 'LAT_VAL'],
+                [env('API_KEY'), $city['lon'], $city['lat']],
+                $this->url
+            );
 
-        $json = json_decode($json);
+            $response = Http::get($url);
+            $json = $response->body();
 
-        // something is happening here
-        Weather::create([
-            'dt' => Carbon::createFromTimestamp($json->current->dt),
+            $json = json_decode($json);
 
-            'icon' => $json->current->weather[0]->icon,
-            'description' => $json->current->weather[0]->description,
+            // something is happening here
+            Weather::create([
+                'slug' => $slug,
 
-            'temp' => $json->current->temp,
-            'feels_like' => $json->current->feels_like,
-            'pressure' => $json->current->pressure,
-            'humidity' => $json->current->humidity,
-            'clouds' => $json->current->clouds,
-            'wind_speed' => $json->current->wind_speed,
-            'wind_deg' => $json->current->wind_deg,
-        ]);
+                'dt' => Carbon::createFromTimestamp($json->current->dt),
 
-        foreach($json->daily as $daily) {
-            Forecast::updateOrCreate([
-                'dt' => Carbon::createFromTimestamp($daily->dt),
-            ], [
-                'icon' => $daily->weather[0]->icon,
-                'description' => $daily->weather[0]->description,
-    
-                'temp_day' => $daily->temp->day,
-                'temp_night' => $daily->temp->night,
+                'icon' => $json->current->weather[0]->icon,
+                'description' => $json->current->weather[0]->description,
 
-                'feels_like_day' => $daily->feels_like->day,
-                'feels_like_night' => $daily->feels_like->night,
-
-                'pressure' => $daily->pressure,
-                'humidity' => $daily->humidity,
-                'clouds' => $daily->clouds,
-                'wind_speed' => $daily->wind_speed,
-                'wind_deg' => $daily->wind_deg,
+                'temp' => $json->current->temp,
+                'feels_like' => $json->current->feels_like,
+                'pressure' => $json->current->pressure,
+                'humidity' => $json->current->humidity,
+                'clouds' => $json->current->clouds,
+                'wind_speed' => $json->current->wind_speed,
+                'wind_deg' => $json->current->wind_deg,
             ]);
+
+            foreach ($json->daily as $daily) {
+                Forecast::updateOrCreate([
+                    'slug' => $slug,
+
+                    'dt' => Carbon::createFromTimestamp($daily->dt),
+                ], [
+                    'icon' => $daily->weather[0]->icon,
+                    'description' => $daily->weather[0]->description,
+
+                    'temp_day' => $daily->temp->day,
+                    'temp_night' => $daily->temp->night,
+
+                    'feels_like_day' => $daily->feels_like->day,
+                    'feels_like_night' => $daily->feels_like->night,
+
+                    'pressure' => $daily->pressure,
+                    'humidity' => $daily->humidity,
+                    'clouds' => $daily->clouds,
+                    'wind_speed' => $daily->wind_speed,
+                    'wind_deg' => $daily->wind_deg,
+                ]);
+            }
         }
 
         $this->info("Data saved.");

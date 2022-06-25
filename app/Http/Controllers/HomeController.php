@@ -10,11 +10,33 @@ class HomeController extends Controller
 {
     public function index(Request $request)
     {
-        $weather = Weather::orderBy('id', 'desc')->limit(1)->first();
+        $slug = \session('slug', 'zielona-gora');
 
-        $forecast = Forecast::orderBy('id', 'desc')->limit(7)->get()->sortBy('dt');
+        $weather = Weather::where('slug', $slug)
+        ->orderBy('id', 'desc')->limit(1)->first();
+
+        $forecast = Forecast::where('slug', $slug)
+        ->orderBy('id', 'desc')->limit(7)->get()->sortBy('dt');
 
         return view('welcome', [
+            'slug' => $slug,
+            'weather' => $weather,
+            'forecast' => $forecast
+        ]);
+    }
+
+    public function show(Request $request, string $slug)
+    {
+        \session(['slug' => $slug]);
+
+        $weather = Weather::where('slug', $slug)
+        ->orderBy('id', 'desc')->limit(1)->first();
+
+        $forecast = Forecast::where('slug', $slug)
+        ->orderBy('id', 'desc')->limit(7)->get()->sortBy('dt');
+
+        return view('welcome', [
+            'slug' => $slug,
             'weather' => $weather,
             'forecast' => $forecast
         ]);

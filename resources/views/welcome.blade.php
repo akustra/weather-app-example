@@ -4,7 +4,13 @@
 
             <div class="overflow-hidden">
 
+            <div>
+                <a href="/wroclaw">Wroclaw</a>
+                <a href="/zielona-gora">Zielona Góra</a>
+            </div>
+
                 <div id="actual-weather" class="mb-12 text-right">
+                    <div>{{ $slug }}</div>
                     <div class="text-8xl">
                         {{ $weather->temp }} <span class="text-gray-500">&deg;C</span>
                     </div>

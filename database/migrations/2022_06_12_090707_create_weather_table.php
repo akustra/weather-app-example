@@ -16,6 +16,8 @@ return new class extends Migration
         Schema::create('weather', function (Blueprint $table) {
             $table->id();
 
+            $table->string('slug', 64);
+
             $table->dateTime('dt');
 
             $table->string('icon')->nullable();
